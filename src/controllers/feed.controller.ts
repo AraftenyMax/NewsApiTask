@@ -4,7 +4,7 @@ import { INews, INewsDoc } from '../entity/news/schema';
 import NewsService from '../entity/news/service';
 import UserService from '../entity/user/service';
 import AppController from "./app.controller";
-import { checkJwt } from '../middleware/check.jwt';
+import { checkJwt } from '../middleware/check.jwt.factory';
 import { IUserDoc } from '../entity/user/schema';
 import AuthController from './auth.controller';
 import { JwtEncryptedPayload } from '../auth/auth.payload';

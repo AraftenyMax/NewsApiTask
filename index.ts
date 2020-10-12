@@ -8,15 +8,16 @@ import NewsApiRetriever from './src/entity/news/retriever';
 import UserService from './src/entity/user/service';
 import NewsService from './src/entity/news/service';
 import { Router } from 'express';
-import { JwtService, jwtServiceFactory } from './src/auth/jwt.service';
+import { JwtService, jwtServiceFactory } from './src/auth/jwt/jwt.service';
 import OAuth2Service from './src/auth/oauth2.service';
+import JwtServiceInterface from './src/auth/jwt/jwt.service.interface';
 
 dotenv.config();
 
 const userService: UserService = new UserService();
 const newsService: NewsService = new NewsService();
 const newsApiRetriever: NewsApiRetriever = new NewsApiRetriever();
-const jwtService: JwtService = jwtServiceFactory();
+const jwtService: JwtServiceInterface = jwtServiceFactory();
 const oauth2Service: OAuth2Service = new OAuth2Service();
 
 const app = new App([

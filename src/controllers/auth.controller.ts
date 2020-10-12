@@ -5,20 +5,21 @@ import AppController from "./app.controller";
 import UserService from "../entity/user/service";
 import { IUser, IUserDoc } from "../entity/user/schema";
 import { JwtEncryptedPayload } from "../auth/auth.payload";
-import { JwtService } from "../auth/jwt.service";
+import { JwtService } from "../auth/jwt/jwt.service";
 import { checkJwt } from "../middleware/check.jwt";
 import OAuth2Service from "../auth/oauth2.service";
 import { OAuth2Profile } from "../auth/oauth2.credentials";
+import JwtServiceInterface from "../auth/jwt/jwt.service.interface";
 
 export default class AuthController implements AppController {
     path: string = '/auth';
     router: Router;
     userService: UserService;
-    jwtService: JwtService;
+    jwtService: JwtServiceInterface;
     oauth2Service: OAuth2Service;
 
     constructor(router: Router, userService: UserService,
-        jwtService: JwtService, oauth2Service: OAuth2Service) {
+        jwtService: JwtServiceInterface, oauth2Service: OAuth2Service) {
         this.router = router;
         this.userService = userService;
         this.jwtService = jwtService;

@@ -1,10 +1,10 @@
-import express, { request, Request, Response } from 'express';
+import { Request, Response } from 'express';
 import { Router } from 'express';
 import { JwtEncryptedPayload } from '../auth/auth.payload';
 import NewsService from '../entity/news/service';
 import { IUserDoc } from '../entity/user/schema';
 import UserService from '../entity/user/service';
-import { checkJwt } from '../middleware/check.jwt';
+import { checkJwt } from '../middleware/check.jwt.factory';
 import AppController from "./app.controller";
 import AuthController from './auth.controller';
 

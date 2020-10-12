@@ -1,5 +1,5 @@
 import { Router } from "express";
 
-export default interface AppController {
+export default class AppController {
     router: Router;
 }

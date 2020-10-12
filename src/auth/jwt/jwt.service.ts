@@ -1,10 +1,10 @@
 import JWTRedis from "jwt-redis";
-import { JWT, REDIS } from "../../config";
-import {v1 as uuidv1} from 'uuid';
-import { redisClient } from "../db/redis";
+import { JWT } from "../../../config";
+import { redisClient } from "../../db/redis";
+import JwtServiceInterface from "./jwt.service.interface";
 
-export class JwtService {
-    jwt: JWTRedis;
+export class JwtService implements JwtServiceInterface {
+    private jwt: JWTRedis;
     constructor(jwt: JWTRedis) {
         this.jwt = jwt;
     }
@@ -25,20 +25,13 @@ export class JwtService {
         return this.jwt.verify(token, JWT.SECRET);
     }
 
-    async decode<T>(token: string): Promise<T> {
-        const decodedToken: T = await this.jwt.decode(token);
-        return decodedToken;
-    }
-
-    public async generateRefreshToken(): Promise<string> {
-        const uuid: string = uuidv1();
-        const refreshToken: string = await this.sign<object>({uuid: uuid});
-        return refreshToken;
+    decode<T>(token: string): Promise<T> {
+        return this.jwt.decode(token);
     }
 }
 
-export function jwtServiceFactory() {
+export function jwtServiceFactory(): JwtServiceInterface {
     let jwtr = new JWTRedis(redisClient);
-    const jwtService = new JwtService(jwtr);
+    const jwtService: JwtServiceInterface = new JwtService(jwtr);
     return jwtService;
 }
