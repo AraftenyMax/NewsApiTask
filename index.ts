@@ -8,7 +8,7 @@ import NewsApiRetriever from './src/entity/news/retriever';
 import UserService from './src/entity/user/service';
 import NewsService from './src/entity/news/service';
 import { Router } from 'express';
-import { JwtService, jwtServiceFactory } from './src/auth/jwt/jwt.service';
+import { jwtServiceFactory } from './src/auth/jwt/jwt.service';
 import OAuth2Service from './src/auth/oauth2.service';
 import JwtServiceInterface from './src/auth/jwt/jwt.service.interface';
 
@@ -22,7 +22,7 @@ const oauth2Service: OAuth2Service = new OAuth2Service();
 
 const app = new App([
     new AuthController(Router(), userService, jwtService, oauth2Service),
-    new FeedController(Router(), userService, newsService),
+    new FeedController(userService, newsService),
     new FavoritesController(Router(), userService, newsService),
     new IndexController(Router()),
 ]);

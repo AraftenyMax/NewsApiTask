@@ -1,9 +1,9 @@
 import { IUser, IUserDoc, User } from "./schema";
+import UserServiceInterface from "./service.interface";
 
-export default class UserService {
-    async create(user: IUser): Promise<IUserDoc> {
-        const data = await User.create(user);
-        return data;
+export default class UserService implements UserServiceInterface {
+    create(user: IUser): Promise<IUserDoc> {
+        return User.create(user);
     }
 
     update(user: IUserDoc): Promise<IUserDoc> {

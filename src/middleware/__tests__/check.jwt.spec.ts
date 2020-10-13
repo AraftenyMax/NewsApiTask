@@ -2,6 +2,7 @@ import { NextFunction, Request, Response } from 'express';
 import { TokenExpiredError, JsonWebTokenError } from 'jwt-redis';
 import JwtServiceInterface from '../../auth/jwt/jwt.service.interface';
 import { createJwtMiddleware } from '../check.jwt.factory';
+import { JwtServiceMock } from './jwt.service.mock';
 
 describe('Jwt check middleware', () => {
     let service: JwtServiceInterface;
@@ -9,23 +10,7 @@ describe('Jwt check middleware', () => {
     let middleware: (request: Request, response: Response, next: NextFunction) => Promise<void>;
 
     beforeEach(() => {
-        service = {
-            sign: () => {
-                return Promise.resolve('resolve');
-            },
-            signRefreshToken: () => {
-                return Promise.resolve('resolve');
-            },
-            destroy: () => {
-                return Promise.resolve(false);
-            },
-            verify: () => {
-                return Promise.resolve({});
-            },
-            decode: function fn<T>(token: string) {
-                return {} as T;
-            }
-        }
+        service = { ...JwtServiceMock }
         jwtServiceFactory = () => service;
         middleware = createJwtMiddleware(jwtServiceFactory);
     });
@@ -67,7 +52,7 @@ describe('Jwt check middleware', () => {
                 }
             } as Request;
             response = ({
-                status: jest.fn().mockImplementationOnce(() => response),
+                status: jest.fn().mockImplementation(() => response),
                 send: jest.fn()
             } as unknown) as Response;
             next = jest.fn();
@@ -89,13 +74,10 @@ describe('Jwt check middleware', () => {
             }
 
             middleware = createJwtMiddleware(jwtServiceFactory);
-            try {
-                await middleware(request, response, next);
-            } catch (err) {
-                expect(err).toBe(expectedError);
-                expect(response.status).toHaveBeenCalledWith(errorStatusCode);
-                expect(response.send).toHaveBeenCalledWith(messageBody);
-            }
+            await middleware(request, response, next);
+            expect(response.status).toHaveBeenCalledWith(errorStatusCode);
+            expect(response.send).toHaveBeenCalledWith(messageBody);
+            expect(next).not.toHaveBeenCalled();
         });
 
         it('Handles expired token', async () => {
@@ -113,13 +95,10 @@ describe('Jwt check middleware', () => {
             }
 
             middleware = createJwtMiddleware(jwtServiceFactory);
-            try {
-                await middleware(request, response, next);
-            } catch (err) {
-                expect(err).toBe(expectedError);
-                expect(response.status).toHaveBeenCalledWith(errorStatusCode);
-                expect(response.send).toHaveBeenCalledWith(messageBody);
-            }
+            await middleware(request, response, next);
+            expect(response.status).toHaveBeenCalledWith(errorStatusCode);
+            expect(response.send).toHaveBeenCalledWith(messageBody);
+            expect(next).not.toHaveBeenCalled();
         });
     });
 
@@ -136,36 +115,18 @@ describe('Jwt check middleware', () => {
                 send: jest.fn()
             } as unknown) as Response;
             next = jest.fn();
-            expectedBody = {'message': 'Invalid access token has been provided'};
+            expectedBody = { 'message': 'Invalid access token has been provided' };
         });
 
         afterEach(() => jest.clearAllMocks());
         it('Handles token header abscence', async () => {
             request = {} as Request;
+            expectedErrorStatus = 401;
             middleware = createJwtMiddleware(jwtServiceFactory);
-            try {
-                await middleware(request, response, next);
-            } catch(err: any) {
-                expect(response.status).toHaveBeenCalledWith(expectedErrorStatus);
-                expect(response.send).toHaveBeenCalledWith(expectedBody);
-                expect(next).not.toHaveBeenCalled();
-            }
-        });
-        
-        it('Handles invalid token', async () => {
-            request = {
-                headers: {
-                    authorization: "Invalidtoken",
-                }
-            } as Request;
-            middleware = createJwtMiddleware(jwtServiceFactory);
-            try {
-                await middleware(request, response, next);
-            } catch (err: any) {
-                expect(response.status).toHaveBeenCalledWith(expectedErrorStatus);
-                expect(response.send).toHaveBeenCalledWith(expectedBody);
-                expect(next).not.toHaveBeenCalled();
-            }
+            await middleware(request, response, next);
+            expect(response.status).toHaveBeenCalledWith(expectedErrorStatus);
+            expect(response.send).toHaveBeenCalledWith(expectedBody);
+            expect(next).not.toHaveBeenCalled();
         });
     });
 });

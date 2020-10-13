@@ -1,15 +1,14 @@
 import { Request, Response } from "express";
-import jwt from 'jsonwebtoken';
 import { Router } from "express";
 import AppController from "./app.controller";
 import UserService from "../entity/user/service";
 import { IUser, IUserDoc } from "../entity/user/schema";
 import { JwtEncryptedPayload } from "../auth/auth.payload";
-import { JwtService } from "../auth/jwt/jwt.service";
 import { checkJwt } from "../middleware/check.jwt";
 import OAuth2Service from "../auth/oauth2.service";
 import { OAuth2Profile } from "../auth/oauth2.credentials";
 import JwtServiceInterface from "../auth/jwt/jwt.service.interface";
+import { extractJwtData } from "../middleware/jwt.data.extractor";
 
 export default class AuthController implements AppController {
     path: string = '/auth';
@@ -28,33 +27,15 @@ export default class AuthController implements AppController {
     }
 
     logout = async (request: Request, response: Response) => {
-        const token: string = AuthController.retrieveToken(request)!;
-        const userInfo: JwtEncryptedPayload = AuthController.getPayload<JwtEncryptedPayload>(request)!;
-        const dbUser: IUserDoc | null = await this.userService.findById(userInfo.id);
+        const token: string = <string>request.headers['authorization'];
+        const userId: string = (request.user as any)?.id!;
+        const dbUser: IUserDoc | null = await this.userService.findById(userId);
         if (!dbUser) {
             response.status(404).send({ 'message': 'No user with such id' });
             return;
         }
         await this.jwtService.destroy(token);
         response.status(200);
-    }
-
-    public static retrieveToken(request: Request): string | undefined {
-        return request.headers['authorization']?.split(' ')[1];
-    }
-
-    public static extractUserId(request: Request): string {
-        const id = this.getPayload<JwtEncryptedPayload>(request)!.id;
-        return id;
-    }
-
-    public static getPayload<T>(request: Request): T | undefined {
-        const token: string = AuthController.retrieveToken(request) ?? '';
-        if (!token) {
-            return undefined;
-        }
-        const decodedToken = <T>jwt.decode(token);
-        return decodedToken;
     }
 
     googleAuthCallback = async (request: Request, response: Response) => {
@@ -84,7 +65,6 @@ export default class AuthController implements AppController {
     refreshToken = async (request: Request, response: Response) => {
         try {
             const refreshToken = <string>request.body.refreshToken;
-            console.log(refreshToken);
             await this.jwtService.verify(refreshToken);
             const payload: JwtEncryptedPayload = await this.jwtService.decode(refreshToken);
             const userInDb = await this.userService.findById(payload.id);
@@ -102,7 +82,7 @@ export default class AuthController implements AppController {
 
     public intializeRoutes() {
         this.router.get(`${this.path}/google_callback`, this.googleAuthCallback);
-        this.router.get(`${this.path}/logout`, [checkJwt], this.logout);
+        this.router.get(`${this.path}/logout`, [checkJwt, extractJwtData], this.logout);
         this.router.get(`${this.path}/token`, this.refreshToken);
     }
 }

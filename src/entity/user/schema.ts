@@ -1,11 +1,5 @@
 import mongoose, { Schema, Document, Model } from 'mongoose';
 
-export interface RefreshToken {
-    token: string,
-    expiresIn: Date,
-    createdAt: Date
-}
-
 export interface IUser {
     email: string;
     firstName: string;

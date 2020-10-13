@@ -1,15 +1,16 @@
 import { INews, News, INewsDoc } from "./schema";
+import NewsServiceInterface from "./service.interface";
 
-export default class NewsService {
+export default class NewsService implements NewsServiceInterface {
     getAllNews(): Promise<INewsDoc[]> {
         return News.find().exec();
     }
 
-    create(news: INews): Promise<INews> {
+    create(news: INews): Promise<INewsDoc> {
         return News.create(news);
     }
 
-    deleteNewsForUser(deletePayload: {newsId: string, userId: string}): Promise<any> {
+    deleteNewsForUser(deletePayload: {newsId: string, userId: string}): Promise<INewsDoc | null> {
         const {newsId, userId} = deletePayload;
         return News.findOneAndDelete({createdBy: userId, _id: newsId}).exec();
     }

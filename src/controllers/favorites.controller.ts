@@ -1,12 +1,11 @@
 import { Request, Response } from 'express';
 import { Router } from 'express';
-import { JwtEncryptedPayload } from '../auth/auth.payload';
 import NewsService from '../entity/news/service';
 import { IUserDoc } from '../entity/user/schema';
 import UserService from '../entity/user/service';
-import { checkJwt } from '../middleware/check.jwt.factory';
+import { checkJwt } from '../middleware/check.jwt';
+import { extractJwtData } from '../middleware/jwt.data.extractor';
 import AppController from "./app.controller";
-import AuthController from './auth.controller';
 
 export default class FavoritesController implements AppController {
     path: string = '/favorites';
@@ -22,9 +21,7 @@ export default class FavoritesController implements AppController {
     }
 
     getFavorites = async (request: Request, response: Response) => {
-        const payload: JwtEncryptedPayload = AuthController.getPayload<JwtEncryptedPayload>(request)!;
-        const id: string = payload.id;
-        const dbUser: IUserDoc | null = await this.userService.findById(id);
+        const dbUser: IUserDoc | null = await this.userService.findById((request.user as any).id);
         if (dbUser) {
             const newsIds: string[] = dbUser.favoriteNews ?? [];
             const favorites = await this.newsService.getFavoriteNewsForUser(newsIds);
@@ -35,8 +32,7 @@ export default class FavoritesController implements AppController {
     }
 
     createFavorite = async (request: Request, response: Response) => {
-        const userId = AuthController.extractUserId(request);
-        const dbUser: IUserDoc | null = await this.userService.findById(userId);
+        const dbUser: IUserDoc | null = await this.userService.findById((request.user as any).id);
         if (!dbUser) {
             response.status(404).send({ 'message': 'No user with such id' });
             return;
@@ -60,8 +56,7 @@ export default class FavoritesController implements AppController {
     }
 
     removeFromFavorites = async (request: Request, response: Response) => {
-        const userId = AuthController.extractUserId(request);
-        const dbUser: IUserDoc | null = await this.userService.findById(userId);
+        const dbUser: IUserDoc | null = await this.userService.findById((request.user as any).id);
         if (!dbUser) {
             response.status(404).send({ 'message': 'No user with such id' });
             return;
@@ -76,15 +71,14 @@ export default class FavoritesController implements AppController {
             response.status(404).send({ 'message': 'User don\'t have news with this id' });
             return;
         }
-        console.log(dbUser, newsId);
         dbUser.favoriteNews = dbUser.favoriteNews.filter(currentNewsId => currentNewsId === newsId);
         await this.userService.update(dbUser);
         response.status(204).send({'message': 'Ok'});
     }
 
     initializeRoutes() {
-        this.router.get(`${this.path}`, [checkJwt], this.getFavorites);
-        this.router.post(`${this.path}/save/:id`, [checkJwt], this.createFavorite);
-        this.router.delete(`${this.path}/:id`, [checkJwt], this.removeFromFavorites);
+        this.router.get(`${this.path}`, [checkJwt, extractJwtData], this.getFavorites);
+        this.router.post(`${this.path}/save/:id`, [checkJwt, extractJwtData], this.createFavorite);
+        this.router.delete(`${this.path}/:id`, [checkJwt, extractJwtData], this.removeFromFavorites);
     }
 }
